@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veritas</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --primary: #1B2A49;
+    --accent: #C8A75D;
+    --martyr: #7A1E1E;
+    --background: #F4F1EA;
+    --surface: #FFFFFF;
+    --surface-soft: #E9E2D0;
+    --text: #1F1F1F;
+    --text-muted: #6B7280;
+    --border: #D6CFC2;
+  }
+  body { background: var(--background); color: var(--text); font-family: Georgia, "Times New Roman", serif; min-height: 100vh; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: var(--primary); border-bottom: 1px solid var(--primary); display: flex; align-items: center; justify-content: center; padding: 0 24px; height: 60px; gap: 40px; }
+  .nav-logo { font-family: Georgia, serif; font-size: 22px; font-weight: bold; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .logo-cross { font-size: 24px; color: var(--accent); display: inline-block; margin-right: 8px; line-height: 1; }
+  .nav-logo span:not(.logo-cross) { font-size: 11px; color: var(--text-muted); display: block; letter-spacing: 2px; font-style: italic; margin-top: -4px; width: 100%; text-align: center; font-weight: 300; }
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab { background: none; border: none; border-bottom: 2px solid transparent; color: #D1D5DB; font-family: Georgia, serif; font-size: 11px; letter-spacing: 1px; padding: 8px 10px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .nav-tab:hover { color: var(--text); }
+  .btn-share { background: var(--accent); color: var(--primary); border: none; padding: 8px 14px; font-family: Georgia, serif; font-size: 12px; font-weight: bold; letter-spacing: 1px; cursor: pointer; border-radius: 3px; text-transform: uppercase; transition: all 0.2s; white-space: nowrap; }
+  .btn-share:hover { background: #D6B870; }
+  .page { display: none; padding-top: 60px; min-height: 100vh; background: var(--background); }
+  .page.active { display: block; }
+  .page-container { max-width: 680px; margin: 0 auto; padding: 60px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+  .hero { width: 100%; padding: 80px 24px; text-align: center; background: var(--surface); margin-bottom: 40px; }
+  #page-home .page-container { max-width: 680px; margin: 0 auto; padding: 0 16px; }
+  #page-home .page-container > h2, #page-home .page-container > .home-context, #page-home .page-container > .feed { padding-top: 20px; }
+  .hero-verse { font-size: 15px; color: var(--accent); letter-spacing: 2px; font-style: italic; margin-bottom: 8px; }
+  .hero-reference { font-size: 12px; color: var(--text-muted); letter-spacing: 3px; text-transform: uppercase; }
+  .feed { max-width: 680px; margin: 0 auto; padding: 32px 16px; display: flex; flex-direction: column; gap: 20px; }
+  .story-card { background: var(--surface-soft); border: 1px solid var(--border); border-radius: 6px; padding: 20px 24px; cursor: pointer; transition: all 0.2s; }
+  .story-card:hover { border-color: var(--primary); transform: translateY(-1px); }
+  .story-tag { display: inline-block; background: var(--surface-soft); color: var(--text); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; margin-bottom: 12px; border: 1px solid var(--border); }
+  .story-tag.martyr { background: var(--martyr); color: #fff; border-color: var(--martyr); }
+  .story-title { font-size: 20px; font-weight: bold; color: var(--primary); margin-bottom: 10px; line-height: 1.3; }
+  .story-verse-ref { font-size: 11px; color: var(--martyr); letter-spacing: 2px; font-style: italic; margin-bottom: 10px; }
+  .story-summary { font-size: 14px; color: var(--text); line-height: 1.7; margin-bottom: 16px; }
+  .story-meta { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); letter-spacing: 1px; }
+  .anon-dot { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; opacity: 0.6; display: inline-block; margin-right: 6px; }
+  #story-view { display: none; padding-top: 60px; min-height: 100vh; }
+  #story-view.active { display: block; }
+  .story-back { padding: 20px 24px; background: var(--surface-soft); border-bottom: 1px solid var(--border); }
+  .btn-back { background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 6px 14px; font-family: Georgia, serif; font-size: 12px; cursor: pointer; border-radius: 3px; letter-spacing: 1px; transition: all 0.2s; }
+  .btn-back:hover { color: var(--text); border-color: var(--text-muted); }
+  .story-full { max-width: 680px; margin: 0 auto; padding: 40px 16px; }
+  .story-full-title { font-size: 28px; font-weight: bold; line-height: 1.3; margin-bottom: 12px; }
+  .story-full-verse { font-size: 13px; color: var(--primary); font-style: italic; letter-spacing: 1px; margin-bottom: 8px; }
+  .story-divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+  .story-full-body { font-size: 16px; line-height: 1.9; color: var(--text); margin-bottom: 32px; }
+  .story-full-body p { margin-bottom: 16px; }
+  .story-full-lesson { background: var(--surface-soft); border-left: 3px solid var(--primary); padding: 20px 24px; border-radius: 0 6px 6px 0; margin-bottom: 40px; }
+  .story-full-lesson-label { font-size: 10px; color: var(--primary); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; }
+  .story-full-lesson p { font-size: 15px; font-style: italic; color: var(--text); line-height: 1.7; }
+  .testimonies-section { margin-top: 40px; }
+  .testimonies-title { font-size: 13px; letter-spacing: 3px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+  .testimony-card { background: var(--surface-soft); border: 1px solid var(--border); border-radius: 4px; padding: 16px 20px; margin-bottom: 12px; }
+  .testimony-text { font-size: 14px; line-height: 1.7; color: var(--text-muted); font-style: italic; margin-bottom: 10px; }
+  .testimony-meta { font-size: 11px; color: #555; letter-spacing: 1px; }
+  .add-testimony { background: var(--surface-soft); border: 1px dashed var(--border); border-radius: 4px; padding: 20px; margin-top: 16px; }
+  .add-testimony textarea { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: Georgia, serif; font-size: 14px; padding: 12px; border-radius: 3px; resize: none; height: 100px; outline: none; transition: border-color 0.2s; }
+  .add-testimony textarea:focus { border-color: var(--primary); }
+  .add-testimony textarea::placeholder { color: #999; font-style: italic; }
+  .btn-testimony { margin-top: 10px; background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 20px; font-family: Georgia, serif; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 3px; transition: all 0.2s; }
+  .btn-testimony:hover { background: var(--primary); color: var(--background); }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.active { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 32px; width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; }
+  .modal-title { font-size: 20px; letter-spacing: 2px; color: var(--primary); text-transform: uppercase; margin-bottom: 6px; }
+  .modal-sub { font-size: 13px; color: var(--text-muted); font-style: italic; margin-bottom: 24px; }
+  .anon-notice { background: rgba(201,168,76,0.05); border: 1px solid rgba(201,168,76,0.2); border-radius: 4px; padding: 12px 16px; font-size: 12px; color: var(--text-muted); font-style: italic; margin-bottom: 20px; }
+  .form-group { margin-bottom: 18px; }
+  .form-label { display: block; font-size: 11px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; }
+  .form-input, .form-select, .form-textarea { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: Georgia, serif; font-size: 14px; padding: 12px; border-radius: 3px; outline: none; transition: border-color 0.2s; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); }
+  .form-select { appearance: none; cursor: pointer; }
+  .form-textarea { resize: none; height: 120px; }
+  .form-textarea.tall { height: 160px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: center; }
+  .btn-cancel { background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 10px 20px; font-family: Georgia, serif; font-size: 13px; cursor: pointer; border-radius: 3px; transition: all 0.2s; }
+  .btn-cancel:hover { color: var(--text); border-color: var(--text-muted); }
+  .btn-submit { background: var(--accent); border: none; color: var(--primary); padding: 10px 24px; font-family: Georgia, serif; font-size: 13px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: 3px; transition: all 0.2s; }
+  .btn-submit:hover { background: #D6B870; }
+  .about-container { max-width: 680px; margin: 0 auto; padding: 60px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+  .about-header { text-align: center; margin-bottom: 40px; }
+  .about-label { display: block; font-size: 11px; letter-spacing: 4px; color: var(--primary); text-transform: uppercase; margin-bottom: 12px; }
+  .about-name { display: block; font-size: 32px; font-weight: bold; margin-bottom: 8px; color: var(--primary); }
+  .about-title-sub { display: block; font-size: 14px; color: var(--text-muted); font-style: italic; letter-spacing: 1px; }
+  .about-avatar { display: block; width: 80px; height: 80px; border-radius: 50%; background: var(--surface-soft); border: 2px solid var(--primary); margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--primary); }
+  .about-section { margin-bottom: 40px; background: var(--surface-soft); padding: 20px 24px; border-radius: 6px; }
+  .about-section-label { font-size: 10px; letter-spacing: 4px; color: var(--primary); text-transform: uppercase; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .about-text { font-size: 15px; line-height: 1.9; color: var(--text); }
+  .about-quote { border-left: 3px solid var(--primary); padding: 16px 24px; background: var(--surface-soft); border-radius: 0 4px 4px 0; margin: 24px 0; font-style: italic; font-size: 16px; color: var(--text); line-height: 1.7; }
+  .explore-container { max-width: 680px; margin: 0 auto; padding: 40px 16px; }
+  .explore-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; justify-content: center; }
+  .filter-btn { background: var(--surface-soft); border: 1px solid var(--border); color: var(--text-muted); padding: 6px 14px; font-family: Georgia, serif; font-size: 12px; letter-spacing: 1px; cursor: pointer; border-radius: 3px; transition: all 0.2s; }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--accent); color: var(--accent); }
+  .explore-grid { display: flex; flex-direction: column; gap: 16px; }
+  .home-intro { padding: 20px 0; }
+  .home-intro h1 { font-size: 32px; margin-bottom: 12px; }
+  .home-intro p { font-size: 16px; color: var(--text); line-height: 1.6; }
+  .home-context { font-size: 13px; color: var(--text-muted); text-align: center; margin: 8px 0 24px; }
+  .btn-delete-story { background: none; border: none; color: #ccc; font-size: 11px; cursor: pointer; padding: 2px 6px; transition: color 0.2s; letter-spacing: 1px; }
+  .btn-delete-story:hover { color: var(--martyr); }
+  .btn-google { width: 100%; background: #fff; border: 1px solid var(--border); color: var(--text); padding: 10px; font-family: Georgia, serif; font-size: 13px; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 4px; transition: border-color 0.2s; }
+  .btn-google:hover { border-color: var(--primary); }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--primary); color: #fff; padding: 10px 24px; border-radius: 4px; font-size: 13px; letter-spacing: 1px; opacity: 0; transition: all 0.3s; z-index: 999; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- INTRO -->
+<div id="intro-screen" style="position:fixed;inset:0;z-index:9999;background:#080604;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;">
+  <div id="intro-cross" style="font-size:48px;color:#C9A84C;opacity:0;transform:scale(0.6);transition:all 1.4s ease;text-shadow:0 0 40px rgba(201,168,76,0.6);">☦</div>
+  <div id="intro-title" style="font-family:Georgia,serif;font-size:36px;font-weight:bold;letter-spacing:12px;color:#C9A84C;text-transform:uppercase;opacity:0;transform:translateY(10px);transition:all 1.2s ease 0.8s;text-shadow:0 0 30px rgba(201,168,76,0.4);">Veritas</div>
+  <div id="intro-verse" style="font-family:Georgia,serif;font-size:13px;font-style:italic;color:#666;letter-spacing:2px;opacity:0;transition:all 1s ease 1.6s;">"And the truth shall set you free." — John 8:32</div>
+  <div id="intro-line" style="width:0px;height:1px;background:linear-gradient(90deg,transparent,#C9A84C,transparent);transition:width 1.2s ease 1s;margin-top:8px;"></div>
+</div>
+<script>
+  window.addEventListener('load', function() {
+    setTimeout(() => { document.getElementById('intro-cross').style.opacity='1'; document.getElementById('intro-cross').style.transform='scale(1)'; }, 200);
+    setTimeout(() => { document.getElementById('intro-title').style.opacity='1'; document.getElementById('intro-title').style.transform='translateY(0)'; }, 800);
+    setTimeout(() => { document.getElementById('intro-verse').style.opacity='1'; document.getElementById('intro-line').style.width='200px'; }, 1400);
+    setTimeout(() => { const s=document.getElementById('intro-screen'); s.style.transition='opacity 1s ease'; s.style.opacity='0'; setTimeout(()=>s.style.display='none',1000); }, 4300);
+  });
+</script>
+
+<nav>
+  <div class="nav-logo" onclick="showPage('home')">
+    <span class="logo-cross">♰</span>
+    VERITAS
+    <span>" And the truth shall set you free "</span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('home')">Home</button>
+    <button class="nav-tab" onclick="showPage('explore')">Explore</button>
+    <button class="nav-tab" onclick="showPage('info')">Info</button>
+    <button class="nav-tab" onclick="showPage('about')">About Me</button>
+    <button class="nav-tab" onclick="showPage('feedback')">Feedback</button>
+  </div>
+  <button class="btn-share" onclick="openModal()">Share +</button>
+</nav>
+
+<div id="page-home" class="page active">
+  <div class="hero">
+    <div class="home-intro">
+      <h1>Welcome to Veritas</h1>
+      <p>A place to share your faith story — honest, raw, real.</p>
+    </div>
+    <div class="hero-verse">"And the truth shall set you free."</div>
+    <div class="hero-reference">John 8:32</div>
+  </div>
+  <div class="page-container">
+    <h2 class="latest-heading">Latest Stories</h2>
+    <p class="home-context">Click any card to read the full testimony and add your own response.</p>
+    <div class="feed" id="home-feed"></div>
+    <div class="home-footer" style="text-align:center;font-size:12px;color:var(--text-muted);padding:32px 0 8px;">© 2026 Veritas. Designed &amp; built by Mardiek.</div>
+  </div>
+</div>
+
+<div id="page-explore" class="page">
+  <div class="page-container">
+    <div class="explore-container">
+      <div class="explore-filters">
+        <button class="filter-btn active" onclick="filterStories('all',this)">All</button>
+        <button class="filter-btn" onclick="filterStories('faith',this)">Faith</button>
+        <button class="filter-btn" onclick="filterStories('suffering',this)">Suffering</button>
+        <button class="filter-btn" onclick="filterStories('hope',this)">Hope</button>
+        <button class="filter-btn" onclick="filterStories('forgiveness',this)">Forgiveness</button>
+        <button class="filter-btn" onclick="filterStories('identity',this)">Identity</button>
+      </div>
+      <div class="explore-grid" id="explore-grid"></div>
+    </div>
+  </div>
+</div>
+
+<div id="page-info" class="page">
+  <div class="about-container">
+    <div class="about-header">
+      <div class="about-label">What is Veritas?</div>
+      <div class="about-name">Welcome to Veritas</div>
+      <div class="about-title-sub">A Space for Your Faith Story</div>
+    </div>
+    <div class="about-section">
+      <div class="about-section-label">The Purpose</div>
+      <div class="about-text">Veritas is a platform for sharing authentic Christian experiences, testimonies, and perspectives — the doubts, the victories, the transformations.</div>
+      <div class="about-quote">"Truth is not just doctrine. Truth is lived experience. Veritas exists to collect those stories."</div>
+    </div>
+    <div class="about-section">
+      <div class="about-section-label">Why Anonymous?</div>
+      <div class="about-text">Anonymity protects voices that need protection and frees everyone to speak truthfully. Your story is not about who you are in the world — it's about how God has moved in your life.</div>
+    </div>
+  </div>
+</div>
+
+<div id="page-about" class="page">
+  <div class="about-container">
+    <div class="about-header">
+      <div style="display:flex;align-items:center;gap:24px;text-align:left;margin-bottom:40px;">
+        <div class="about-avatar">♰</div>
+        <div>
+          <div class="about-label">Founder &amp; Creator</div>
+          <div class="about-name">Mardiek</div>
+          <div class="about-title-sub">Believer · Storyteller · Witness</div>
+        </div>
+      </div>
+    </div>
+    <div class="about-section">
+      <div class="about-section-label">About Me</div>
+      <div class="about-text">
+        My name is Mardiek, and my motivation for creating this project began when I watched The 21. It tells the true story of 21 men — most from Egypt and one from Somalia — who were killed by ISIS because they refused to deny their faith in Jesus Christ.<br><br>
+        Watching their final moments didn't just inform me — it confronted me. I saw ordinary workers who chose faith over fear, truth over survival. That realization changed how I look at belief. Faith is not just something comforting or cultural; it can demand everything. It can cost a life. And yet, for them, Christ was worth more than breath.<br><br>
+        I created this app as a response to that conviction. I wanted a place that remembers their witness and invites people to reflect on what faith really means when it is tested. This project is not just information — it is testimony.<br><br>
+        This project exists to remember them, to honor their sacrifice, and to encourage others to stand firm in what they believe.
+      </div>
+    </div>
+  </div>
+</div>
+<div id="page-feedback" class="page">
+  <div class="about-container">
+    <div class="about-header">
+      <div class="about-label">Your Voice Matters</div>
+      <div class="about-name">Feedback</div>
+      <div class="about-title-sub">Help us improve Veritas</div>
+    </div>
+    <div class="about-section">
+      <div class="about-section-label">How is your experience?</div>
+      <div style="display:flex;gap:16px;justify-content:center;margin:20px 0;" id="smiley-row">
+        <button onclick="selectSmiley('bad',this)" style="font-size:36px;background:none;border:2px solid transparent;border-radius:50%;padding:8px;cursor:pointer;transition:all 0.2s;">😐</button>
+        <button onclick="selectSmiley('good',this)" style="font-size:36px;background:none;border:2px solid transparent;border-radius:50%;padding:8px;cursor:pointer;transition:all 0.2s;">😊</button>
+        <button onclick="selectSmiley('great',this)" style="font-size:36px;background:none;border:2px solid transparent;border-radius:50%;padding:8px;cursor:pointer;transition:all 0.2s;">😍</button>
+      </div>
+      <div class="about-section-label" style="margin-top:24px;">Leave a comment (optional)</div>
+      <textarea id="feedback-text" placeholder="Share your thoughts, suggestions, or anything on your mind..." style="width:100%;background:#fff;border:1px solid #D6CFC2;color:#1F1F1F;font-family:Georgia,serif;font-size:14px;padding:12px;border-radius:3px;resize:none;height:120px;outline:none;margin-top:8px;"></textarea>
+      <div style="text-align:center;margin-top:16px;">
+        <button onclick="submitFeedback()" style="background:#C8A75D;border:none;color:#1B2A49;padding:10px 28px;font-family:Georgia,serif;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:3px;">Submit Feedback</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="story-view">
+  <div class="story-back"><button class="btn-back" onclick="closeStory()">← Back</button></div>
+  <div class="story-full" id="story-full-content"></div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">Share Your Story</div>
+    <div class="modal-sub">Your testimony could be what someone needs to hear today.</div>
+    <div class="anon-notice">🔒 You may enter a name, but it's optional. Leave blank to stay anonymous.</div>
+    <div class="form-group"><label class="form-label">Title</label><input class="form-input" id="input-title" type="text" placeholder="Give your story a title..."></div>
+    <div class="form-group"><label class="form-label">Bible Verse (optional)</label><input class="form-input" id="input-verse-ref" type="text" placeholder="e.g. Romans 8:28"></div>
+    <div class="form-group"><label class="form-label">Theme</label>
+      <select class="form-select" id="input-theme">
+        <option value="faith">Faith</option>
+        <option value="suffering">Suffering</option>
+        <option value="hope">Hope</option>
+        <option value="forgiveness">Forgiveness</option>
+        <option value="identity">Identity</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Short Summary (2–3 sentences)</label><textarea class="form-textarea" id="input-summary" placeholder="A brief preview of your story..."></textarea></div>
+    <div class="form-group"><label class="form-label">Your Full Story</label><textarea class="form-textarea tall" id="input-body" placeholder="Tell your story. Take your time..."></textarea></div>
+    <div class="form-group"><label class="form-label">What did this teach you about God?</label><textarea class="form-textarea" id="input-lesson" placeholder="End with what you learned or felt..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-submit" onclick="submitStory()">Submit Story</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+let selectedSmiley = null;
+window.selectSmiley = function(val, btn) {
+  selectedSmiley = val;
+  document.querySelectorAll('#smiley-row button').forEach(b => b.style.borderColor = 'transparent');
+  btn.style.borderColor = '#C8A75D';
+};
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('story-view').classList.remove('active');
+  document.getElementById('page-' + page).classList.add('active');
+  const idx = { home:0, explore:1, info:2, about:3, feedback:4, profile:null };
+  if (idx[page] !== null && idx[page] !== undefined) document.querySelectorAll('.nav-tab')[idx[page]].classList.add('active');
+  window.scrollTo(0, 0);
+}
+function openModal() { document.getElementById('modal').classList.add('active'); }
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+function closeStory() { document.getElementById('story-view').classList.remove('active'); showPage('home'); }
+document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAWXuag9-Eb3Sq-5p4fo3NTTOM7vS2h-Cc",
+  authDomain: "veritas-943fc.firebaseapp.com",
+  projectId: "veritas-943fc",
+  storageBucket: "veritas-943fc.firebasestorage.app",
+  messagingSenderId: "542527840002",
+  appId: "1:542527840002:web:0f2aa302475bf9d3ac2c1b"
+};
+
+const ADMIN_EMAIL = "mardiek@veritas.com";
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+let currentUser = null;
+let allStories = [];
+let currentFilter = 'all';
+let authMode = 'login';
+
+// ── NAV AUTH ──
+function injectNavAuth() {
+  let el = document.getElementById('nav-auth');
+  if (!el) {
+    const nav = document.querySelector('nav');
+    el = document.createElement('div');
+    el.id = 'nav-auth';
+    el.style.cssText = 'display:flex;align-items:center;gap:8px;';
+    nav.insertBefore(el, nav.querySelector('.btn-share'));
+  }
+  if (currentUser) {
+    const name = currentUser.displayName || currentUser.email.split('@')[0];
+    el.innerHTML = `<span style="font-size:12px;color:#C8A75D;letter-spacing:1px;font-style:italic;cursor:pointer;" onclick="showPage('profile')">☦ ${name}</span>`;
+  } else {
+    el.innerHTML = `<button onclick="openAuthModal('login')" style="background:transparent;border:1px solid #C8A75D;color:#C8A75D;padding:6px 14px;font-family:Georgia,serif;font-size:12px;cursor:pointer;border-radius:3px;letter-spacing:1px;">Login</button>`;
+  }
+}
+
+// ── AUTH MODAL ──
+function ensureAuthModal() {
+  if (document.getElementById('auth-modal')) return;
+  const div = document.createElement('div');
+  div.id = 'auth-modal';
+  div.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;align-items:center;justify-content:center;padding:20px;';
+  div.innerHTML = `
+    <div style="background:#fff;border:1px solid #D6CFC2;border-radius:8px;padding:32px;width:100%;max-width:460px;">
+      <div id="am-title" style="font-size:20px;letter-spacing:2px;color:#1B2A49;text-transform:uppercase;margin-bottom:6px;">Login</div>
+      <div id="am-sub" style="font-size:13px;color:#6B7280;font-style:italic;margin-bottom:20px;">Welcome back to Veritas.</div>
+      <div id="am-error" style="color:#7A1E1E;font-size:12px;min-height:18px;margin-bottom:8px;font-style:italic;"></div>
+      <div id="am-name-row" style="display:none;margin-bottom:18px;">
+        <div style="font-size:11px;letter-spacing:2px;color:#6B7280;text-transform:uppercase;margin-bottom:8px;">Your Name</div>
+        <input id="am-name" type="text" placeholder="How should we call you?" style="width:100%;background:#fff;border:1px solid #D6CFC2;color:#1F1F1F;font-family:Georgia,serif;font-size:14px;padding:12px;border-radius:3px;outline:none;">
+      </div>
+      <div style="margin-bottom:18px;">
+        <div style="font-size:11px;letter-spacing:2px;color:#6B7280;text-transform:uppercase;margin-bottom:8px;">Email</div>
+        <input id="am-email" type="email" placeholder="your@email.com" style="width:100%;background:#fff;border:1px solid #D6CFC2;color:#1F1F1F;font-family:Georgia,serif;font-size:14px;padding:12px;border-radius:3px;outline:none;">
+      </div>
+      <div style="margin-bottom:20px;">
+        <div style="font-size:11px;letter-spacing:2px;color:#6B7280;text-transform:uppercase;margin-bottom:8px;">Password</div>
+        <input id="am-pass" type="password" placeholder="••••••••" style="width:100%;background:#fff;border:1px solid #D6CFC2;color:#1F1F1F;font-family:Georgia,serif;font-size:14px;padding:12px;border-radius:3px;outline:none;">
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button onclick="closeAuthModal()" style="background:none;border:1px solid #D6CFC2;color:#6B7280;padding:10px 20px;font-family:Georgia,serif;font-size:13px;cursor:pointer;border-radius:3px;">Cancel</button>
+        <button id="am-btn" onclick="handleAuth()" style="background:#C8A75D;border:none;color:#1B2A49;padding:10px 24px;font-family:Georgia,serif;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:3px;">Login</button>
+      </div>
+      <div style="text-align:center;margin:16px 0;color:#aaa;font-size:12px;letter-spacing:1px;">— or —</div>
+      <button onclick="signInGoogle()" class="btn-google">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px;height:18px;">
+        Continue with Google
+      </button>
+      <div id="am-switch" style="text-align:center;margin-top:16px;font-size:13px;color:#6B7280;">No account? <a onclick="switchAuth()" style="color:#1B2A49;cursor:pointer;text-decoration:underline;">Create one</a></div>
+    </div>`;
+  div.addEventListener('click', e => { if (e.target === div) closeAuthModal(); });
+  document.body.appendChild(div);
+}
+
+// ── PROFILE PAGE ──
+function ensureProfilePage() {
+  if (document.getElementById('page-profile')) return;
+  const div = document.createElement('div');
+  div.id = 'page-profile';
+  div.className = 'page';
+  div.innerHTML = `
+    <div style="max-width:680px;margin:0 auto;padding:40px 16px;">
+      <div style="background:#fff;border:1px solid #D6CFC2;border-radius:8px;padding:32px;text-align:center;margin-bottom:24px;">
+        <div style="width:70px;height:70px;border-radius:50%;background:#1B2A49;color:#C8A75D;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 16px;">☦</div>
+        <div id="profile-name" style="font-size:22px;font-weight:bold;color:#1B2A49;margin-bottom:4px;">-</div>
+        <div id="profile-email" style="font-size:13px;color:#6B7280;font-style:italic;">-</div>
+        <button onclick="doLogout()" style="margin-top:16px;background:transparent;border:1px solid #D6CFC2;color:#6B7280;padding:8px 20px;font-family:Georgia,serif;font-size:12px;cursor:pointer;border-radius:3px;">Sign out</button>
+      </div>
+      <div style="font-size:13px;letter-spacing:3px;color:#6B7280;text-transform:uppercase;margin-bottom:16px;">My Stories</div>
+      <div id="my-stories-feed"><div style="text-align:center;padding:40px;color:#6B7280;font-style:italic;">Loading...</div></div>
+    </div>`;
+  document.body.insertBefore(div, document.getElementById('story-view'));
+}
+
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  injectNavAuth();
+  renderFeed('home-feed', allStories);
+  renderFeed('explore-grid', byTheme(allStories, currentFilter));
+  const pp = document.getElementById('page-profile');
+  if (pp && pp.classList.contains('active')) loadProfile();
+});
+
+window.openAuthModal = function(mode) {
+  ensureAuthModal();
+  authMode = mode || 'login';
+  document.getElementById('auth-modal').style.display = 'flex';
+  document.getElementById('am-error').textContent = '';
+  refreshModal();
+};
+window.closeAuthModal = function() {
+  const m = document.getElementById('auth-modal');
+  if (m) m.style.display = 'none';
+};
+window.switchAuth = function() { authMode = authMode === 'login' ? 'register' : 'login'; refreshModal(); };
+
+function refreshModal() {
+  const isLogin = authMode === 'login';
+  document.getElementById('am-title').textContent = isLogin ? 'Login' : 'Create Account';
+  document.getElementById('am-sub').textContent = isLogin ? 'Welcome back to Veritas.' : 'Join the community of witnesses.';
+  document.getElementById('am-btn').textContent = isLogin ? 'Login' : 'Create Account';
+  document.getElementById('am-name-row').style.display = isLogin ? 'none' : 'block';
+  document.getElementById('am-switch').innerHTML = isLogin
+    ? 'No account? <a onclick="switchAuth()" style="color:#1B2A49;cursor:pointer;text-decoration:underline;">Create one</a>'
+    : 'Already have one? <a onclick="switchAuth()" style="color:#1B2A49;cursor:pointer;text-decoration:underline;">Login</a>';
+}
+
+window.handleAuth = async function() {
+  const email = document.getElementById('am-email').value.trim();
+  const pass = document.getElementById('am-pass').value;
+  const errEl = document.getElementById('am-error');
+  errEl.textContent = '';
+  if (!email || !pass) { errEl.textContent = 'Please fill in all fields.'; return; }
+  try {
+    if (authMode === 'register') {
+      const name = document.getElementById('am-name').value.trim() || 'Believer';
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      await updateProfile(cred.user, { displayName: name });
+    } else {
+      await signInWithEmailAndPassword(auth, email, pass);
+    }
+    closeAuthModal();
+    showToast(authMode === 'register' ? 'Welcome to Veritas!' : 'Welcome back!');
+  } catch(e) {
+    const msgs = { 'auth/email-already-in-use':'This email is already registered.','auth/weak-password':'Password must be at least 6 characters.','auth/invalid-credential':'Email or password is incorrect.','auth/invalid-email':'Invalid email address.' };
+    errEl.textContent = msgs[e.code] || 'Something went wrong. Try again.';
+  }
+};
+
+window.signInGoogle = async function() {
+  try {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+    closeAuthModal();
+    showToast('Welcome to Veritas!');
+  } catch(e) {
+    const errEl = document.getElementById('am-error');
+    if (errEl) errEl.textContent = 'Google sign-in failed. Try again.';
+    console.error(e);
+  }
+};
+
+window.doLogout = async function() {
+  await signOut(auth);
+  showPage('home');
+  showToast('Signed out');
+};
+
+function isAdmin() { return currentUser && currentUser.email === ADMIN_EMAIL; }
+function canDelete(item) { return isAdmin() || (currentUser && currentUser.uid === item.userId); }
+function byTheme(s, t) { return t === 'all' ? s : s.filter(x => x.theme === t); }
+
+function cardHTML(s) {
+  const del = canDelete(s) ? `<button class="btn-delete-story" onclick="event.stopPropagation();fbDelStory('${s.id}')">✕ delete</button>` : '';
+  return `<div class="story-card" onclick="openStory('${s.id}')">
+    <div class="story-tag martyr">${s.theme}</div>
+    <div class="story-title">${s.title}</div>
+    ${s.verseRef ? `<div class="story-verse-ref">${s.verseRef}</div>` : ''}
+    <div class="story-summary">${s.summary}</div>
+    <div class="story-meta"><span><span class="anon-dot"></span>${s.displayName||s.author||'Anonymous'}</span><span>${(s.testimonies||[]).length} testimon${(s.testimonies||[]).length===1?'y':'ies'}</span>${del}</div>
+  </div>`;
+}
+
+function renderFeed(id, list) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = list.length ? list.map(cardHTML).join('') : '<div style="color:#999;font-style:italic;text-align:center;padding:40px;">No stories here yet.</div>';
+}
+
+window.openStory = function(id) {
+  const s = allStories.find(x => x.id === id || String(x.id) === String(id));
+  if (!s) return;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('story-view').classList.add('active');
+
+  const tHtml = (s.testimonies||[]).length > 0
+    ? s.testimonies.map(t => {
+        const del = canDelete(t) ? `<button style="background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:0 4px;" onclick="fbDelTestimony('${s.id}','${t.id}')">×</button>` : '';
+        return `<div class="testimony-card"><div class="testimony-text">"${t.text}"</div><div class="testimony-meta" style="display:flex;justify-content:space-between;align-items:center;"><span>${t.displayName||t.author||'Anonymous'} · ${t.date||'Recently'}</span>${del}</div></div>`;
+      }).join('')
+    : '<div style="color:#aaa;font-style:italic;font-size:13px;margin-bottom:16px;">No testimonies yet. Be the first.</div>';
+
+  const addSection = currentUser
+    ? `<div class="add-testimony"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:#6B7280;"><input type="checkbox" id="ta-${id}" checked><label for="ta-${id}">Post anonymously</label></div><textarea id="tt-${id}" placeholder="How did this story move you?"></textarea><button class="btn-testimony" onclick="fbAddTestimony('${id}')">Add Your Testimony</button></div>`
+    : `<div style="color:#aaa;font-style:italic;font-size:13px;margin-top:16px;"><a onclick="openAuthModal('login')" style="color:#1B2A49;cursor:pointer;text-decoration:underline;">Login</a> to add your testimony.</div>`;
+
+  document.getElementById('story-full-content').innerHTML =
+    `<div class="story-tag">${s.theme}</div>
+    <div class="story-full-title">${s.title}</div>
+    ${s.verseRef ? `<div class="story-full-verse">${s.verseRef}</div>` : ''}
+    <hr class="story-divider">
+    <div class="story-full-body">${s.body.split('\n\n').map(p=>`<p>${p}</p>`).join('')}</div>
+    ${s.lesson ? `<div class="story-full-lesson"><div class="story-full-lesson-label">What this taught me</div><p>${s.lesson}</p></div>` : ''}
+    <div class="testimonies-section"><div class="testimonies-title">Testimonies (${(s.testimonies||[]).length})</div>${tHtml}${addSection}</div>`;
+  window.scrollTo(0,0);
+};
+
+window.fbAddTestimony = async function(storyId) {
+  if (!currentUser) { openAuthModal('login'); return; }
+  const textEl = document.getElementById('tt-'+storyId);
+  const anonEl = document.getElementById('ta-'+storyId);
+  if (!textEl || !textEl.value.trim()) return;
+  const t = { id:'t'+Date.now(), text:textEl.value.trim(), displayName: anonEl&&anonEl.checked?'Anonymous':(currentUser.displayName||'Believer'), userId:currentUser.uid, date:'Just now' };
+  const story = allStories.find(s=>s.id===storyId);
+  story.testimonies = story.testimonies||[];
+  story.testimonies.push(t);
+  await updateDoc(doc(db,'stories',storyId),{testimonies:story.testimonies});
+  showToast('Testimony added!');
+  window.openStory(storyId);
+};
+
+window.fbDelTestimony = async function(storyId, tId) {
+  if (!confirm('Delete this testimony?')) return;
+  const story = allStories.find(s=>s.id===storyId);
+  story.testimonies = story.testimonies.filter(t=>t.id!==tId);
+  await updateDoc(doc(db,'stories',storyId),{testimonies:story.testimonies});
+  showToast('Deleted');
+  window.openStory(storyId);
+};
+
+window.fbDelStory = async function(storyId) {
+  if (!confirm('Delete this story permanently?')) return;
+  await deleteDoc(doc(db,'stories',storyId));
+  allStories = allStories.filter(s=>s.id!==storyId);
+  renderFeed('home-feed', allStories);
+  renderFeed('explore-grid', byTheme(allStories, currentFilter));
+  showToast('Story deleted');
+};
+
+const _origShowPage = window.showPage;
+window.showPage = function(page) {
+  if (page === 'profile') {
+    ensureProfilePage();
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('story-view').classList.remove('active');
+    document.getElementById('page-profile').classList.add('active');
+    loadProfile();
+    window.scrollTo(0,0);
+    return;
+  }
+  if (page === 'feedback') {
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('story-view').classList.remove('active');
+    document.getElementById('page-feedback').classList.add('active');
+    document.querySelectorAll('.nav-tab')[4].classList.add('active');
+    window.scrollTo(0,0);
+    return;
+  }
+  _origShowPage(page);
+  renderFeed('home-feed', allStories);
+  renderFeed('explore-grid', byTheme(allStories, currentFilter));
+};
+
+window.filterStories = function(theme, btn) {
+  currentFilter = theme;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFeed('explore-grid', byTheme(allStories, theme));
+};
+
+window.submitStory = async function() {
+  if (!currentUser) { openAuthModal('login'); return; }
+  const title = document.getElementById('input-title').value.trim();
+  const summary = document.getElementById('input-summary').value.trim();
+  const body = document.getElementById('input-body').value.trim();
+  if (!title||!summary||!body) { alert('Please fill in title, summary and story.'); return; }
+  const story = { title, displayName:'Anonymous', userId:currentUser.uid, verseRef:document.getElementById('input-verse-ref').value.trim(), theme:document.getElementById('input-theme').value, summary, body, lesson:document.getElementById('input-lesson').value.trim(), testimonies:[], createdAt:serverTimestamp() };
+  const ref = await addDoc(collection(db,'stories'),story);
+  story.id = ref.id;
+  allStories.unshift(story);
+  closeModal();
+  ['input-title','input-verse-ref','input-summary','input-body','input-lesson'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderFeed('home-feed', allStories);
+  showPage('home');
+  showToast('Story published!');
+};
+
+function loadProfile() {
+  if (!currentUser) { showPage('home'); return; }
+  const nameEl = document.getElementById('profile-name');
+  const emailEl = document.getElementById('profile-email');
+  if (nameEl) nameEl.textContent = currentUser.displayName||'Believer';
+  if (emailEl) emailEl.textContent = currentUser.email;
+  renderFeed('my-stories-feed', allStories.filter(s=>s.userId===currentUser.uid));
+}
+
+async function loadStories() {
+  try {
+    const q = query(collection(db,'stories'), orderBy('createdAt','desc'));
+    const snap = await getDocs(q);
+    allStories = snap.docs.map(d => ({ id:d.id, ...d.data(), testimonies:d.data().testimonies||[] }));
+  } catch(e) { console.error(e); allStories = []; }
+  renderFeed('home-feed', allStories);
+  renderFeed('explore-grid', byTheme(allStories, currentFilter));
+}
+
+injectNavAuth();
+loadStories();
+
+window.submitFeedback = async function() {
+  const text = document.getElementById('feedback-text').value.trim();
+  if (!selectedSmiley && !text) { showToast('Please select a rating or leave a comment.'); return; }
+  try {
+    await addDoc(collection(db, 'feedback'), {
+      rating: selectedSmiley || null,
+      comment: text || null,
+      date: new Date().toISOString()
+    });
+  } catch(e) { console.error(e); }
+  document.getElementById('feedback-text').value = '';
+  selectedSmiley = null;
+  document.querySelectorAll('#smiley-row button').forEach(b => b.style.borderColor = 'transparent');
+  showToast('Thank you for your feedback! 🙏');
+};
+</script>
+</body></html>
