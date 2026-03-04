@@ -16,7 +16,7 @@
     --border: #D6CFC2;
   }
   body { background: var(--background); color: var(--text); font-family: Georgia, "Times New Roman", serif; min-height: 100vh; }
-  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: var(--primary); border-bottom: 1px solid var(--primary); display: flex; align-items: center; justify-content: center; padding: 0 24px; height: 60px; gap: 16px; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: var(--primary); border-bottom: 1px solid var(--primary); display: flex; align-items: center; justify-content: center; padding: 0 24px; height: 60px; gap: 40px; }
   .nav-logo { font-family: Georgia, serif; font-size: 22px; font-weight: bold; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; cursor: pointer; display: flex; align-items: center; gap: 8px; }
   .logo-cross { font-size: 24px; color: var(--accent); display: inline-block; margin-right: 8px; line-height: 1; }
   .nav-logo span:not(.logo-cross) { font-size: 11px; color: var(--text-muted); display: block; letter-spacing: 2px; font-style: italic; margin-top: -4px; width: 100%; text-align: center; font-weight: 300; }
@@ -288,9 +288,16 @@ window.selectSmiley = function(val, btn) {
   document.querySelectorAll('#smiley-row button').forEach(b => b.style.borderColor = 'transparent');
   btn.style.borderColor = '#C8A75D';
 };
-window.submitFeedback = function() {
+window.submitFeedback = async function() {
   const text = document.getElementById('feedback-text').value.trim();
   if (!selectedSmiley && !text) { showToast('Please select a rating or leave a comment.'); return; }
+  try {
+    await addDoc(collection(db, 'feedback'), {
+      rating: selectedSmiley || null,
+      comment: text || null,
+      date: new Date().toISOString()
+    });
+  } catch(e) { console.error(e); }
   document.getElementById('feedback-text').value = '';
   selectedSmiley = null;
   document.querySelectorAll('#smiley-row button').forEach(b => b.style.borderColor = 'transparent');
